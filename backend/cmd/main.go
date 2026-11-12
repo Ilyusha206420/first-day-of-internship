@@ -1,8 +1,14 @@
 package main
 
-import "github.com/gin-gonic/gin"
+import "github.com/Ilyusha206420/first-day-of-internship/backend/internal"
 
 func main() {
-	r := gin.New()
-	_ = r.Run(":8080")
+	db, err := internal.ConnectDB()
+	if err != nil {
+		panic(err)
+	}
+	uc, err := internal.NewUseCase(db)
+	if err != nil {
+		panic(err)
+	}
 }
