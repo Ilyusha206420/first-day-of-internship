@@ -19,11 +19,11 @@ type UserRepository interface {
 }
 
 func (u *User) ValidatePassword(password string) (bool, error) {
-	hash, err := argon2id.Hash(password, argon2id.DefaultParams)
+	ok, err := argon2id.Verify(u.Password, password)
 	if err != nil {
 		return false, err
 	}
-	return u.Password == hash, nil
+	return ok, nil
 }
 
 func (u *User) ChangePassword(newPassword string) error {
@@ -32,7 +32,7 @@ func (u *User) ChangePassword(newPassword string) error {
 	} else if len(newPassword) > 64 {
 		return errors.New("password must be at most 64 characters long")
 	}
-	hash, err := argon2id.Hash(newPassword, argon2id.DefaultParams)
+	hash, err := argon2id.Hash(newPassword, argon2id.DefaultParams())
 	if err != nil {
 		return errors.New("failed to hash new password")
 	}
