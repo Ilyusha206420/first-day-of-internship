@@ -19,7 +19,7 @@ func ConnectDB() (*Repository, error) {
 
 func (r *Repository) GetContentByID(id int64) (*Content, error) {
 	content := &Content{}
-	err := r.db.Get(content, "SELECT * FROM content WHERE id = $1", id)
+	err := r.db.Get(content, "SELECT * FROM contents WHERE id = $1", id)
 	if err != nil {
 		return nil, err
 	}
