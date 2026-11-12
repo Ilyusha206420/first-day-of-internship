@@ -19,7 +19,7 @@ type UserRepository interface {
 }
 
 func (u *User) ValidatePassword(password string) (bool, error) {
-	ok, err := argon2id.Verify(u.Password, password)
+	ok, err := argon2id.Verify(password, u.Password)
 	if err != nil {
 		return false, err
 	}
