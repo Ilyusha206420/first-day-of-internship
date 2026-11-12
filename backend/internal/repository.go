@@ -43,3 +43,30 @@ func (r *Repository) GetTgtsBySrcId(src_id int64) ([]*Edge, error) {
 	}
 	return edges, nil
 }
+
+func (r *Repository) GetUserByID(id int64) (*User, error) {
+	user := &User{}
+	err := r.db.Get(user, "SELECT * FROM users WHERE id = $1", id)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func (r *Repository) GetSessionByID(id int64) (*Session, error) {
+	session := &Session{}
+	err := r.db.Get(session, "SELECT * FROM sessions WHERE id = $1", id)
+	if err != nil {
+		return nil, err
+	}
+	return session, nil
+}
+
+func (r *Repository) GetDialogsBySessionID(session_id int64) ([]*Dialog, error) {
+	dialogs := []*Dialog{}
+	err := r.db.Select(&dialogs, "SELECT * FROM dialogs WHERE session_id = $1", session_id)
+	if err != nil {
+		return nil, err
+	}
+	return dialogs, nil
+}
