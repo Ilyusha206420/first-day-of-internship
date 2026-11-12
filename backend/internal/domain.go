@@ -1,10 +1,13 @@
-package domain
+package internal
 
-import "context"
+import (
+	"context"
+	"database/sql"
+)
 
 type Content struct {
-	ID   int64
-	Data string
+	ID   int64  `db:"id" json:"id"`
+	Data string `db:"data" json:"data"`
 }
 
 type ContentRepository interface {
@@ -12,9 +15,9 @@ type ContentRepository interface {
 }
 
 type Node struct {
-	ID        int64
-	Method    int64
-	ContentID int64
+	ID        int64         `db:"id" json:"id"`
+	Method    int64         `db:"method" json:"method"`
+	ContentID sql.NullInt64 `db:"content_id" json:"content_id"`
 }
 
 type NodeRepository interface {
@@ -22,8 +25,8 @@ type NodeRepository interface {
 }
 
 type Edge struct {
-	SrcID int64
-	TgtID int64
+	SrcID int64 `db:"src_id" json:"src_id"`
+	TgtID int64 `db:"tgt_id" json:"tgt_id"`
 }
 
 type EdgeRepository interface {
