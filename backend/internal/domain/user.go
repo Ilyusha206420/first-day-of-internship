@@ -18,12 +18,12 @@ type UserRepository interface {
 	ChangePassword(ctx context.Context, user *User, newPassword string) error
 }
 
-func (u *User) ValidatePassword(password string) bool {
+func (u *User) ValidatePassword(password string) (bool, error) {
 	hash, err := argon2id.Hash(password, argon2id.DefaultParams)
 	if err != nil {
-		return false
+		return false, err
 	}
-	return u.Password == hash
+	return u.Password == hash, nil
 }
 
 func (u *User) ChangePassword(newPassword string) error {
