@@ -16,6 +16,7 @@ type User struct {
 type UserRepository interface {
 	FindByName(ctx context.Context, name string) (*User, error)
 	ChangePassword(ctx context.Context, user *User, newPassword string) error
+	Save(ctx context.Context, user *User) error
 }
 
 func (u *User) ValidatePassword(password string) (bool, error) {
