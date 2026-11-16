@@ -19,6 +19,20 @@ type UserRepository interface {
 	Save(ctx context.Context, user *User) error
 }
 
+func NewUser(name, password string) (*User, error) {
+	if len(password) < 8 {
+		return nil, errors.New("password must be at least 8 characters long")
+	} else if len(password) > 64 {
+		return nil, errors.New("password must be at most 64 characters long")
+	}
+
+	hash, err := argon2id.Hash(password, argon2id.DefaultParams())
+	if err != nil {
+		return nil, err
+	}
+	return &User{Name: name, Password: hash}, nil
+}
+
 func (u *User) ValidatePassword(password string) (bool, error) {
 	ok, err := argon2id.Verify(password, u.Password)
 	if err != nil {
