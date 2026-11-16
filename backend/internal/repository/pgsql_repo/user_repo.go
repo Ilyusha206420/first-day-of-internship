@@ -10,10 +10,13 @@ import (
 )
 
 type UserRepository struct {
+	db *sqlx.DB
+}
+
+type userRow struct {
 	ID       int64  `db:"id"`
 	Name     string `db:"name"`
 	Password string `db:"pass"`
-	db       *sqlx.DB
 }
 
 func NewUserRepository(db *sqlx.DB) *UserRepository {
@@ -21,7 +24,8 @@ func NewUserRepository(db *sqlx.DB) *UserRepository {
 }
 
 func (ur *UserRepository) FindByName(ctx context.Context, name string) (*domain.User, error) {
-	err := ur.db.GetContext(ctx, ur, "SELECT id, name, pass FROM users WHERE name = $1", name)
+	var urow userRow
+	err := ur.db.GetContext(ctx, &urow, "SELECT id, name, pass FROM users WHERE name = $1", name)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -30,9 +34,9 @@ func (ur *UserRepository) FindByName(ctx context.Context, name string) (*domain.
 	}
 
 	return &domain.User{
-		ID:       ur.ID,
-		Name:     ur.Name,
-		Password: ur.Password,
+		ID:       urow.ID,
+		Name:     urow.Name,
+		Password: urow.Password,
 	}, nil
 }
 
