@@ -29,6 +29,8 @@ CREATE TABLE users (
 CREATE TABLE sessions (
     id INTEGER PRIMARY KEY,
     user_id INTEGER,
+    refresh_token TEXT,
+    access_token TEXT,
 
     FOREIGN KEY (user_id) REFERENCES users (id)
 );
