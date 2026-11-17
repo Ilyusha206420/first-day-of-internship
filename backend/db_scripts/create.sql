@@ -36,10 +36,10 @@ CREATE TABLE sessions (
 );
 
 CREATE TABLE dialogs (
+    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     session_id INTEGER,
     content_id INTEGER,
 
-    CONSTRAINT pk_dialogs PRIMARY KEY (session_id, content_id),
     FOREIGN KEY (session_id) REFERENCES sessions (id),
     FOREIGN KEY (content_id) REFERENCES contents (id)
 );
