@@ -114,6 +114,17 @@ func (h *AuthHandler) setTokenCookies(c *gin.Context, accessToken string, refres
 
 }
 
+func (h *AuthHandler) Logout(c *gin.Context) {
+	if rawRefresh, err := c.Cookie(refreshCookieName); err == nil {
+		_ = h.sessionService.RevokeSession(c.Request.Context(), rawRefresh)
+	}
+
+	h.clearTokenCookies(c)
+	c.JSON(http.StatusOK, gin.H{
+		"status": "logged out",
+	})
+}
+
 func (h *AuthHandler) setAccessCookie(c *gin.Context, accessToken string) {
 	c.SetSameSite(http.SameSiteStrictMode)
 	c.SetCookie(accessCookieName, accessToken, int(h.accessTTL.Seconds()), "/", "", h.secureCookie, true)
