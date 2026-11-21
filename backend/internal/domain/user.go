@@ -8,15 +8,20 @@ import (
 )
 
 type User struct {
-	ID       int64
-	Name     string
-	Password string
+	ID           int64
+	Name         string
+	Password     string
+	RefreshToken string
 }
 
 type UserRepository interface {
 	FindByName(ctx context.Context, name string) (*User, error)
 	ChangePassword(ctx context.Context, user *User, newPassword string) error
 	Save(ctx context.Context, user *User) error
+}
+
+type TokensRepository interface {
+	Add(ctx context.Context, user_id int64) error
 }
 
 func NewUser(name, password string) (*User, error) {
