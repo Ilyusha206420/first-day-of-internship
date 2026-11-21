@@ -21,6 +21,10 @@ type tokenRow struct {
 	ExpiresAt time.Time `db:"expires_at"`
 }
 
+func NewTokenRepo(db *sqlx.DB) *PGTokenRepo {
+	return &PGTokenRepo{db: db}
+}
+
 func (tr *PGTokenRepo) Add(ctx context.Context, token *domain.Token) error {
 	query := `
 		INSERT INTO tokens (user_id, refresh_token, expires_at)
