@@ -82,6 +82,30 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	})
 }
 
+func (h *AuthHandler) Refresh(c *gin.Context) {
+	rawRefresh, err := c.Cookie(refreshCookieName)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "Missing refresh token",
+		})
+		return
+	}
+
+	newAccess, err := h.sessionService.RefreshAccessToken(c.Request.Context(), rawRefresh)
+	if err != nil {
+		h.clearTokenCookies(c)
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"errir": "Invalid or expired session",
+		})
+		return
+	}
+
+	h.setAccessCookie(c, newAccess)
+	c.JSON(http.StatusOK, gin.H{
+		"status": "refreshed",
+	})
+}
+
 func (h *AuthHandler) setTokenCookies(c *gin.Context, accessToken string, refreshToken string) {
 	h.setAccessCookie(c, accessToken)
 
@@ -93,4 +117,10 @@ func (h *AuthHandler) setTokenCookies(c *gin.Context, accessToken string, refres
 func (h *AuthHandler) setAccessCookie(c *gin.Context, accessToken string) {
 	c.SetSameSite(http.SameSiteStrictMode)
 	c.SetCookie(accessCookieName, accessToken, int(h.accessTTL.Seconds()), "/", "", h.secureCookie, true)
+}
+
+func (h *AuthHandler) clearTokenCookies(c *gin.Context) {
+	c.SetSameSite(http.SameSiteStrictMode)
+	c.SetCookie(accessCookieName, "", -1, "/", "", h.secureCookie, true)
+	c.SetCookie(refreshCookieName, "", -1, "/", "", h.secureCookie, true)
 }
