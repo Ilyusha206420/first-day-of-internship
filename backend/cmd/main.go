@@ -77,7 +77,13 @@ func main() {
 	}
 	ss := services.NewSessionService(ur, tr, jwt_sec, 15*time.Minute, 30*24*time.Hour)
 
-	ah := http_transport.NewAuthHandler(as, ss, 15*time.Minute, 30*24*time.Hour, false)
+	secureCookie := true
+
+	if dbg := os.Getenv("DEBUG"); dbg == "TRUE" {
+		secureCookie = false
+	}
+
+	ah := http_transport.NewAuthHandler(as, ss, 15*time.Minute, 30*24*time.Hour, secureCookie)
 
 	r := gin.Default()
 
