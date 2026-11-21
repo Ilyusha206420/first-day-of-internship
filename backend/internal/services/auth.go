@@ -14,10 +14,11 @@ func NewAuthService(userRepo domain.UserRepository) *AuthService {
 	return &AuthService{UserRepo: userRepo}
 }
 
-func (s *AuthService) ValidateUserCredentials(username, password string) (bool, error) {
-	user, err := s.UserRepo.FindByName(context.Background(), username)
-	if err != nil || user == nil {
+func (as *AuthService) AuthWithPassword(ctx context.Context, username string, password string) (bool, error) {
+	u, err := as.UserRepo.FindByName(ctx, username)
+	if err != nil {
 		return false, err
 	}
-	return user.ValidatePassword(password)
+
+	return u.ValidatePassword(password)
 }
