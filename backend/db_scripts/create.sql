@@ -1,13 +1,13 @@
 CREATE TABLE users (
-    id INTEGER PRIMARY KEY,
-    name TEXT,
-    pass TEXT
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    public_id UUID NOT NULL UNIQUE DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    pass TEXT NOT NULL
 );
 
 CREATE TABLE tokens (
-    refresh_token INTEGER PRIMARY KEY,
-    expires_at INTEGER,
-    user_id INTEGER,
-
-    FOREIGN KEY (user_id) REFERENCES users (id)
-)
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    refresh_token TEXT NOT NULL UNIQUE,
+    expires_at TIMESTAMPTZ NOT NULL,
+    user_id BIGINT NOT NULL REFERENCES users (id) ON DELETE CASCADE
+);
