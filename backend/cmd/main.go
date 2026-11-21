@@ -4,11 +4,13 @@ import (
 	"context"
 	"log"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 
 	"github.com/Ilyusha206420/first-day-of-internship/backend/internal/domain"
 	"github.com/Ilyusha206420/first-day-of-internship/backend/internal/repository/pgsql_repo"
+	"github.com/Ilyusha206420/first-day-of-internship/backend/internal/services"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 )
@@ -62,4 +64,13 @@ func main() {
 			log.Fatal(err)
 		}
 	}
+
+	as := services.NewAuthService(ur)
+
+	tr := pgsql_repo.NewTokenRepo(db)
+	jwt_sec := os.Getenv("JWT_SECRET")
+	if jwt_sec == "" {
+		log.Fatal(".env file error: variable JWT_SECRET not set")
+	}
+	ss := services.NewSessionService(ur, tr, jwt_sec, 15*time.Minute, 30*24*time.Hour)
 }
