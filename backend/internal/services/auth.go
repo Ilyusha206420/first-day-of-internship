@@ -11,38 +11,30 @@ var (
 	InvalidCredentials = errors.New("Invalid username or password")
 )
 
-type SessionManager interface {
-	CreateSession(ctx context.Context, user *domain.User) (*TokenPair, error)
-}
-
 type AuthService struct {
-	userRepo       domain.UserRepository
-	sessionManager SessionManager
+	userRepo domain.UserRepository
 }
 
-func NewAuthService(userRepo domain.UserRepository, sessionManager SessionManager) *AuthService {
-	return &AuthService{
-		userRepo:       userRepo,
-		sessionManager: sessionManager,
-	}
+func NewAuthService(userRepo domain.UserRepository) *AuthService {
+	return &AuthService{userRepo: userRepo}
 }
 
-func (as *AuthService) AuthWithLoginPassword(ctx context.Context, username string, password string) (*TokenPair, error) {
+func (as *AuthService) AuthWithLoginPassword(ctx context.Context, username string, password string) error {
 	u, err := as.userRepo.FindByName(ctx, username)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if u == nil {
-		return nil, InvalidCredentials
+		return InvalidCredentials
 	}
 
 	valid, err := u.ValidatePassword(password)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if !valid {
-		return nil, InvalidCredentials
+		return InvalidCredentials
 	}
 
-	return as.sessionManager.CreateSession(ctx, u)
+	return nil
 }
