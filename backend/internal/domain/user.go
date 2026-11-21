@@ -21,6 +21,7 @@ type User struct {
 
 type UserRepository interface {
 	Add(ctx context.Context, user *User) error
+	FindByID(ctx context.Context, user_id int64) (*User, error)
 	FindByName(ctx context.Context, name string) (*User, error)
 	FindByPublicID(ctx context.Context, publicID uuid.UUID) (*User, error)
 	ChangePassword(ctx context.Context, userID int64, newPasswordHash string) error
