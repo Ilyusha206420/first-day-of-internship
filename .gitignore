@@ -2,3 +2,4 @@
 /frontend/.pnp
 /frontend/.pnp.js
 .VSCodeCounter/
+.env
