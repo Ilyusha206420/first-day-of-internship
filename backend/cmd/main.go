@@ -57,7 +57,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = ur.Save(context.Background(), admin)
+		err = ur.Add(context.Background(), admin)
 		if err != nil {
 			log.Fatal(err)
 		}

@@ -25,6 +25,15 @@ func NewUserRepository(db *sqlx.DB) *PGUserRepository {
 	return &PGUserRepository{db: db}
 }
 
+func (ur *PGUserRepository) Add(ctx context.Context, user *domain.User) error {
+	query := `
+		INSERT INTO users (name, pass) 
+		VALUES ($1, $2) 
+		RETURNING id, public_id`
+
+	return ur.db.QueryRowxContext(ctx, query, user.Name, user.PasswordHash).Scan(&user.ID, &user.PublicID)
+}
+
 func (ur *PGUserRepository) FindByName(ctx context.Context, name string) (*domain.User, error) {
 	var urow userRow
 	query := `SELECT id, public_id, name, pass FROM users WHERE name = $1`
@@ -69,13 +78,4 @@ func (ur *PGUserRepository) ChangePassword(ctx context.Context, user *domain.Use
 	query := `UPDATE users SET pass = $1 WHERE id = $2`
 	_, err := ur.db.ExecContext(ctx, query, newPasswordHash, user.ID)
 	return err
-}
-
-func (ur *PGUserRepository) Save(ctx context.Context, user *domain.User) error {
-	query := `
-		INSERT INTO users (name, pass) 
-		VALUES ($1, $2) 
-		RETURNING id, public_id`
-
-	return ur.db.QueryRowxContext(ctx, query, user.Name, user.PasswordHash).Scan(&user.ID, &user.PublicID)
 }
