@@ -9,7 +9,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type UserRepository struct {
+type PGUserRepository struct {
 	db *sqlx.DB
 }
 
@@ -19,11 +19,11 @@ type userRow struct {
 	Password string `db:"pass"`
 }
 
-func NewUserRepository(db *sqlx.DB) *UserRepository {
-	return &UserRepository{db: db}
+func NewUserRepository(db *sqlx.DB) *PGUserRepository {
+	return &PGUserRepository{db: db}
 }
 
-func (ur *UserRepository) FindByName(ctx context.Context, name string) (*domain.User, error) {
+func (ur *PGUserRepository) FindByName(ctx context.Context, name string) (*domain.User, error) {
 	var urow userRow
 	err := ur.db.GetContext(ctx, &urow, "SELECT id, name, pass FROM users WHERE name = $1", name)
 	if err != nil {
@@ -40,7 +40,7 @@ func (ur *UserRepository) FindByName(ctx context.Context, name string) (*domain.
 	}, nil
 }
 
-func (ur *UserRepository) ChangePassword(ctx context.Context, user *domain.User, newPassword string) error {
+func (ur *PGUserRepository) ChangePassword(ctx context.Context, user *domain.User, newPassword string) error {
 	_, err := ur.db.ExecContext(ctx, "UPDATE users SET password = $1 WHERE id = $2", newPassword, user.ID)
 	if err != nil {
 		return err
@@ -48,7 +48,7 @@ func (ur *UserRepository) ChangePassword(ctx context.Context, user *domain.User,
 	return nil
 }
 
-func (ur *UserRepository) Save(ctx context.Context, user *domain.User) error {
+func (ur *PGUserRepository) Save(ctx context.Context, user *domain.User) error {
 	_, err := ur.db.ExecContext(ctx, "INSERT INTO users (name, pass) VALUES ($1, $2)", user.Name, user.Password)
 	if err != nil {
 		return err
