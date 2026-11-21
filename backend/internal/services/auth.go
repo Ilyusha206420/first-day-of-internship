@@ -19,22 +19,22 @@ func NewAuthService(userRepo domain.UserRepository) *AuthService {
 	return &AuthService{userRepo: userRepo}
 }
 
-func (as *AuthService) AuthWithLoginPassword(ctx context.Context, username string, password string) error {
+func (as *AuthService) AuthWithLoginPassword(ctx context.Context, username string, password string) (*domain.User, error) {
 	u, err := as.userRepo.FindByName(ctx, username)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if u == nil {
-		return InvalidCredentials
+		return nil, InvalidCredentials
 	}
 
 	valid, err := u.ValidatePassword(password)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if !valid {
-		return InvalidCredentials
+		return nil, InvalidCredentials
 	}
 
-	return nil
+	return u, nil
 }
