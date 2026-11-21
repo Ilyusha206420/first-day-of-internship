@@ -3,14 +3,17 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 	"os"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
 	"github.com/Ilyusha206420/first-day-of-internship/backend/internal/domain"
 	"github.com/Ilyusha206420/first-day-of-internship/backend/internal/repository/pgsql_repo"
 	"github.com/Ilyusha206420/first-day-of-internship/backend/internal/services"
+	http_transport "github.com/Ilyusha206420/first-day-of-internship/backend/internal/transport/http"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 )
@@ -73,4 +76,26 @@ func main() {
 		log.Fatal(".env file error: variable JWT_SECRET not set")
 	}
 	ss := services.NewSessionService(ur, tr, jwt_sec, 15*time.Minute, 30*24*time.Hour)
+
+	ah := http_transport.NewAuthHandler(as, ss, 15*time.Minute, 30*24*time.Hour, false)
+
+	r := gin.Default()
+
+	authGroup := r.Group("/api/auth")
+	{
+		authGroup.POST("/login", ah.Login)
+		authGroup.POST("/refresh", ah.Refresh)
+		authGroup.POST("/logout", ah.Logout)
+	}
+
+	protected := r.Group("/api")
+	protected.Use(http_transport.AuthMiddleware(ss))
+	{
+		protected.GET("/me", func(c *gin.Context) {
+			userID := c.MustGet("userPublicID")
+			c.JSON(http.StatusOK, gin.H{
+				"public_id": userID,
+			})
+		})
+	}
 }
