@@ -8,6 +8,10 @@ import (
 	"github.com/dhenkes/argon2id"
 )
 
+var (
+	IncorrectPassLen = errors.New("password must be at least 8 characters long and at most 64 characters long")
+)
+
 type User struct {
 	ID           int64
 	PublicID     uuid.UUID
@@ -45,10 +49,10 @@ func (u *User) ChangePassword(newPassword string) error {
 
 func validateAndHashPassword(password string) (string, error) {
 	if len(password) < 8 {
-		return "", errors.New("password must be at least 8 characters long")
+		return "", IncorrectPassLen
 	}
 	if len(password) > 64 {
-		return "", errors.New("password must be at most 64 characters long")
+		return "", IncorrectPassLen
 	}
 	return argon2id.Hash(password, argon2id.DefaultParams())
 }
