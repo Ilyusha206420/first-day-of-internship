@@ -1,45 +1,13 @@
-CREATE TABLE contents (
-    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    data TEXT UNIQUE NOT NULL
-);
-
-CREATE TABLE nodes (
-    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    method INTEGER,
-    content_id INTEGER,
-
-    FOREIGN KEY (content_id) REFERENCES contents (id)
-);
-
-CREATE TABLE edges (
-    src_id INTEGER,
-    tgt_id INTEGER,
-
-    CONSTRAINT pk_edges PRIMARY KEY (src_id, tgt_id),
-    FOREIGN KEY (src_id) REFERENCES nodes (id),
-    FOREIGN KEY (tgt_id) REFERENCES nodes (id)
-);
-
 CREATE TABLE users (
     id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     name TEXT,
     pass TEXT
 );
 
-CREATE TABLE sessions (
-    id INTEGER PRIMARY KEY,
+CREATE TABLE tokens (
+    refresh_token INTEGER PRIMARY KEY,
+    expires_at INTEGER,
     user_id INTEGER,
-    refresh_token TEXT,
-    access_token TEXT,
 
     FOREIGN KEY (user_id) REFERENCES users (id)
-);
-
-CREATE TABLE dialogs (
-    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    session_id INTEGER,
-    content_id INTEGER,
-
-    FOREIGN KEY (session_id) REFERENCES sessions (id),
-    FOREIGN KEY (content_id) REFERENCES contents (id)
-);
+)
