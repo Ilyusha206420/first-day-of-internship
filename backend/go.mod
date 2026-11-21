@@ -6,6 +6,7 @@ require (
 	github.com/dhenkes/argon2id v1.0.0
 	github.com/jackc/pgx/v5 v5.13.0
 	github.com/jmoiron/sqlx v1.4.0
+	github.com/joho/godotenv v1.5.1
 )
 
 require (
