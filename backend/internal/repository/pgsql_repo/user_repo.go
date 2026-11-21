@@ -34,6 +34,26 @@ func (ur *PGUserRepository) Add(ctx context.Context, user *domain.User) error {
 	return ur.db.QueryRowxContext(ctx, query, user.Name, user.PasswordHash).Scan(&user.ID, &user.PublicID)
 }
 
+func (ur *PGUserRepository) FindByID(ctx context.Context, user_id int64) (*domain.User, error) {
+	var urow userRow
+	query := `SELECT id, public_id, name, pass FROM users WHERE id = $1`
+
+	err := ur.db.GetContext(ctx, &urow, query, user_id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &domain.User{
+		ID:           urow.ID,
+		PublicID:     urow.PublicID,
+		Name:         urow.Name,
+		PasswordHash: urow.Password,
+	}, nil
+}
+
 func (ur *PGUserRepository) FindByName(ctx context.Context, name string) (*domain.User, error) {
 	var urow userRow
 	query := `SELECT id, public_id, name, pass FROM users WHERE name = $1`
@@ -74,8 +94,8 @@ func (ur *PGUserRepository) FindByPublicID(ctx context.Context, publicID uuid.UU
 	}, nil
 }
 
-func (ur *PGUserRepository) ChangePassword(ctx context.Context, user *domain.User, newPasswordHash string) error {
+func (ur *PGUserRepository) ChangePassword(ctx context.Context, user_id int64, newPasswordHash string) error {
 	query := `UPDATE users SET pass = $1 WHERE id = $2`
-	_, err := ur.db.ExecContext(ctx, query, newPasswordHash, user.ID)
+	_, err := ur.db.ExecContext(ctx, query, newPasswordHash, user_id)
 	return err
 }
