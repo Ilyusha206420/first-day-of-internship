@@ -10,12 +10,31 @@ SELECT id
 FROM methods
 WHERE method_name = 'START_POINT';
 
-INSERT INTO contents (data) VALUES
-('Выпал шизофренический симптокомплекс'),
-('Выпал органический симптокомплекс'),
-('Выпал олигофренический симптокомплекс'),
-('Выпал аффективно-эндогенный симптокомплекс (гипотимический вариант)'),
-('Выпал аффективно-эндогенный симптокомплекс (гипертимический вариант)'),
-('Выпал личностно-фномальный симптокомплекс'),
-('Выпал психогенно-невротический симптокомплекс'),
-
+WITH inserted_contents AS (
+    INSERT INTO contents (data) VALUES
+    ('Выпал шизофренический симптокомплекс'),
+    ('Выпал органический симптокомплекс'),
+    ('Выпал олигофренический симптокомплекс'),
+    ('Выпал аффективно-эндогенный симптокомплекс (гипотимический вариант)'),
+    ('Выпал аффективно-эндогенный симптокомплекс (гипертимический вариант)'),
+    ('Выпал личностно-аномальный симптокомплекс'),
+    ('Выпал психогенно-невротический симптокомплекс')
+    RETURNING id
+),
+inserted_nodes AS (
+    INSERT INTO nodes (method_id, content_id)
+    SELECT m.id, ic.id
+    FROM inserted_contents ic
+    CROSS JOIN methods m
+    WHERE m.method_name = 'INTERNAL_MSG'
+    RETURNING id
+)
+INSERT INTO edges (src_id, tgt_id)
+SELECT start_node.id, new_node.id
+FROM inserted_nodes new_node
+CROSS JOIN (
+    SELECT n.id
+    FROM nodes n
+    JOIN methods m ON m.id = n.method_id
+    WHERE m.method_name = 'START_POINT'
+) start_node;
