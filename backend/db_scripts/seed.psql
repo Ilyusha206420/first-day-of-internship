@@ -1,40 +1,67 @@
-INSERT INTO methods (method_name) VALUES 
-('START_POINT'), 
-('NPC_REPLICA'), 
-('PLAYER_REPLICA'), 
-('INTERNAL_MSG'), 
+INSERT INTO methods (method_name) VALUES
+('START_POINT'),
+('NPC_REPLICA'),
+('PLAYER_REPLICA'),
+('INTERNAL_MSG'),
 ('PLOT_DATA');
 
-INSERT INTO nodes (method_id)
-SELECT id
-FROM methods
-WHERE method_name = 'START_POINT';
+BEGIN;
 
-WITH inserted_contents AS (
-    INSERT INTO contents (data) VALUES
-    ('Выпал шизофренический симптокомплекс'),
-    ('Выпал органический симптокомплекс'),
-    ('Выпал олигофренический симптокомплекс'),
-    ('Выпал аффективно-эндогенный симптокомплекс (гипотимический вариант)'),
-    ('Выпал аффективно-эндогенный симптокомплекс (гипертимический вариант)'),
-    ('Выпал личностно-аномальный симптокомплекс'),
-    ('Выпал психогенно-невротический симптокомплекс')
-    RETURNING id
-),
-inserted_nodes AS (
-    INSERT INTO nodes (method_id, content_id)
-    SELECT m.id, ic.id
-    FROM inserted_contents ic
-    CROSS JOIN methods m
-    WHERE m.method_name = 'INTERNAL_MSG'
-    RETURNING id
-)
+CREATE TEMP TABLE temp_nodes (
+    key TEXT PRIMARY KEY,
+    method_name TEXT NOT NULL,
+    content_text TEXT
+) ON COMMIT DROP;
+
+INSERT INTO temp_nodes (key, method_name, content_text) VALUES
+('start',   'START_POINT',  NULL),
+('sympt1', 'INTERNAL_MSG', 'Выпал шизофренический симптокомплекс.'),
+('sympt2', 'INTERNAL_MSG', 'Выпал органический симптокомплекс.'),
+('sympt3', 'INTERNAL_MSG', 'Выпал олигофренический симптокомплекс.'),
+('sympt4', 'INTERNAL_MSG', 'Выпал аффективно-эндогенный симптокомплекс (гипотимический вариант).'),
+('sympt5', 'INTERNAL_MSG', 'Выпал аффективно-эндогенный симптокомплекс (гипертимический вариант).'),
+('sympt6', 'INTERNAL_MSG', 'Выпал личностно-аномальный симптокомплекс.'),
+('sympt7', 'INTERNAL_MSG', 'Выпал психогенно-невротический симптокомплекс.');
+
+CREATE TEMP TABLE temp_edges (
+    src_key TEXT NOT NULL,
+    tgt_key TEXT NOT NULL
+) ON COMMIT DROP;
+
+INSERT INTO temp_edges (src_key, tgt_key) VALUES
+('start', 'sympt1'),
+('start', 'sympt2'),
+('start', 'sympt3'),
+('start', 'sympt4'),
+('start', 'sympt5'),
+('start', 'sympt6'),
+('start', 'sympt7');
+
+INSERT INTO contents (data)
+SELECT DISTINCT content_text
+FROM temp_nodes
+WHERE content_text IS NOT NULL
+ON CONFLICT DO NOTHING;
+
+CREATE TEMP TABLE node_map ON COMMIT DROP AS
+SELECT
+    tn.key,
+    nextval(pg_get_serial_sequence('nodes', 'id')) AS real_id,
+    m.id AS method_id,
+    c.id AS content_id
+FROM temp_nodes tn
+LEFT JOIN methods m ON m.method_name = tn.method_name
+LEFT JOIN contents c ON c.data = tn.content_text;
+
+INSERT INTO nodes (id, method_id, content_id)
+OVERRIDING SYSTEM VALUE
+SELECT real_id, method_id, content_id
+FROM node_map;
+
 INSERT INTO edges (src_id, tgt_id)
-SELECT start_node.id, new_node.id
-FROM inserted_nodes new_node
-CROSS JOIN (
-    SELECT n.id
-    FROM nodes n
-    JOIN methods m ON m.id = n.method_id
-    WHERE m.method_name = 'START_POINT'
-) start_node;
+SELECT src.real_id, tgt.real_id
+FROM temp_edges te
+JOIN node_map src ON src.key = te.src_key
+JOIN node_map tgt ON tgt.key = te.tgt_key;
+
+COMMIT;
