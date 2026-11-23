@@ -4,9 +4,9 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"os"
 	"time"
 
+	"github.com/caarlos0/env/v11"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
@@ -18,23 +18,27 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+type Config struct {
+	PGUser        string `env:"POSTGRES_USER,required"`
+	PGPass        string `env:"POSTGRES_PASSWORD,required"`
+	AdminUsername string `env:"ADMIN_USERNAME,required"`
+	AdminPassword string `env:"ADMIN_PASSWORD,required"`
+	JWTSecret     string `env:"JWT_SECRET,required"`
+	DBG           bool   `env:"DEBUG"`
+}
+
 func main() {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	pg_user := os.Getenv("POSTGRES_USER")
-	if pg_user == "" {
-		log.Fatal(".env file error: variable POSTGRES_USER not set")
+	var cfg Config
+	if err = env.Parse(&cfg); err != nil {
+		log.Fatal(err.Error())
 	}
 
-	pg_pass := os.Getenv("POSTGRES_PASSWORD")
-	if pg_pass == "" {
-		log.Fatal(".env file error: variable POSTGRES_PASSWORD not set")
-	}
-
-	db, err := sqlx.Connect("pgx", "user="+pg_user+" password="+pg_pass+" dbname=mydb sslmode=disable")
+	db, err := sqlx.Connect("pgx", "user="+cfg.PGUser+" password="+cfg.PGPass+" dbname=mydb sslmode=disable")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -42,23 +46,13 @@ func main() {
 
 	ur := pgsql_repo.NewUserRepository(db)
 
-	admin_name := os.Getenv("ADMIN_USERNAME")
-	if admin_name == "" {
-		log.Fatal(".env file error: variable ADMIN_USERNAME not set")
-	}
-
-	admin, err := ur.FindByName(context.Background(), admin_name)
+	admin, err := ur.FindByName(context.Background(), cfg.AdminUsername)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	if admin == nil {
-		admin_pass := os.Getenv("ADMIN_PASSWORD")
-		if admin_pass == "" {
-			log.Fatal(".env file error: variable ADMIN_PASSWORD not set")
-		}
-
-		admin, err = domain.NewUser(admin_name, admin_pass)
+		admin, err = domain.NewUser(cfg.AdminUsername, cfg.AdminPassword)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -71,19 +65,10 @@ func main() {
 	as := services.NewAuthService(ur)
 
 	tr := pgsql_repo.NewTokenRepo(db)
-	jwt_sec := os.Getenv("JWT_SECRET")
-	if jwt_sec == "" {
-		log.Fatal(".env file error: variable JWT_SECRET not set")
-	}
-	ss := services.NewSessionService(ur, tr, jwt_sec, 15*time.Minute, 30*24*time.Hour)
 
-	secureCookie := true
+	ss := services.NewSessionService(ur, tr, cfg.JWTSecret, 15*time.Minute, 30*24*time.Hour)
 
-	if dbg := os.Getenv("DEBUG"); dbg == "TRUE" {
-		secureCookie = false
-	}
-
-	ah := http_transport.NewAuthHandler(as, ss, 15*time.Minute, 30*24*time.Hour, secureCookie)
+	ah := http_transport.NewAuthHandler(as, ss, 15*time.Minute, 30*24*time.Hour, !cfg.DBG)
 
 	r := gin.Default()
 
