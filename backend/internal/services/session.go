@@ -16,7 +16,7 @@ var (
 )
 
 type SessionUserRepository interface {
-	FindByID(ctx context.Context, user_id int64) (*domain.User, error)
+	FindByID(ctx context.Context, userID int64) (*domain.User, error)
 }
 
 type SessionTokenRepository interface {
