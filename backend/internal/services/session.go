@@ -15,6 +15,13 @@ var (
 	InvalidToken = errors.New("Invalid or expired token")
 )
 
+type SessionUserRepository interface {
+	FindByID(ctx context.Context, user_id int64) (*domain.User, error)
+}
+
+type SessionTokenRepository interface {
+}
+
 type AccessClaims struct {
 	jwt.RegisteredClaims
 }
@@ -25,16 +32,16 @@ type TokenPair struct {
 }
 
 type SessionService struct {
-	userRepo   domain.UserRepository
-	tokenRepo  domain.TokenRepository
+	userRepo   SessionUserRepository
+	tokenRepo  SessionTokenRepository
 	jwtSecret  []byte
 	accessTTL  time.Duration
 	refreshTTL time.Duration
 }
 
 func NewSessionService(
-	userRepo domain.UserRepository,
-	tokenRepo domain.TokenRepository,
+	userRepo SessionUserRepository,
+	tokenRepo SessionTokenRepository,
 	jwtSecret string,
 	accessTTL time.Duration,
 	refreshTTL time.Duration,
