@@ -11,3 +11,19 @@ CREATE TABLE tokens (
     expires_at TIMESTAMPTZ NOT NULL,
     user_id BIGINT NOT NULL REFERENCES users (id) ON DELETE CASCADE
 );
+
+CREATE TABLE contents (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    data text UNIQUE NOT NULL
+);
+
+CREATE TABLE nodes (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    content_id BIGINT REFERENCES contents (id)
+);
+
+CREATE TABLE edges (
+    src_id BIGINT NOT NULL REFERENCES nodes (id),
+    tgt_id BIGINT NOT NULL REFERENCES nodes (id),
+    PRIMARY KEY (src_id, tgt_id)
+);
