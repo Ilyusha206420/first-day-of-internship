@@ -306,7 +306,8 @@ INSERT INTO temp_nodes (key, method_name, content_text) VALUES
 
 CREATE TEMP TABLE temp_edges (
     src_key TEXT NOT NULL,
-    tgt_key TEXT NOT NULL
+    tgt_key TEXT NOT NULL,
+    PRIMARY KEY (src_key, tgt_key)
 ) ON COMMIT DROP;
 
 INSERT INTO temp_edges (src_key, tgt_key) VALUES
@@ -353,11 +354,6 @@ INSERT INTO temp_edges (src_key, tgt_key) VALUES
 ('npc1-4-4', 'pl1-5-1'),
 
 ('pl1-5-1', 'npc1-5-1'), ('pl1-5-1', 'npc1-5-2'), ('pl1-5-1', 'npc1-5-3'), ('pl1-5-1', 'npc1-5-4'),
-
-('pl1-5-1', 'npc1-5-1'), ('pl1-5-1', 'npc1-5-2'), ('pl1-5-1', 'npc1-5-3'), ('pl1-5-1', 'npc1-5-4'), 
-('pl1-5-2', 'npc1-5-1'), ('pl1-5-2', 'npc1-5-2'), ('pl1-5-2', 'npc1-5-3'), ('pl1-5-2', 'npc1-5-4'),
-('pl1-5-3', 'npc1-5-1'), ('pl1-5-3', 'npc1-5-2'), ('pl1-5-3', 'npc1-5-3'), ('pl1-5-3', 'npc1-5-4'), 
-('pl1-5-4', 'npc1-5-1'), ('pl1-5-4', 'npc1-5-2'), ('pl1-5-4', 'npc1-5-3'), ('pl1-5-4', 'npc1-5-4'),
 
 ('npc1-5-1', 'pl1-6-1'), ('npc1-5-1', 'pl1-6-2'), 
 ('npc1-5-2', 'pl1-6-1'), ('npc1-5-2', 'pl1-6-2'), 
