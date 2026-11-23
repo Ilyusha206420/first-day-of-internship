@@ -33,5 +33,3 @@ CREATE TABLE edges (
     tgt_id BIGINT NOT NULL REFERENCES nodes (id),
     PRIMARY KEY (src_id, tgt_id)
 );
-
-INSERT INTO methods (method_name) VALUES ('START_POINT'), ('NPC_REPLICA'), ('PLAYER_REPLICA'), ('INTERNAL_MSG'), ('PLOT_DATA');
