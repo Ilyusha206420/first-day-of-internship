@@ -20,6 +20,10 @@ type SessionUserRepository interface {
 }
 
 type SessionTokenRepository interface {
+	Add(ctx context.Context, token *domain.Token) error
+	FindByHash(ctx context.Context, tokenHash string) (*domain.Token, error)
+	DeleteByHash(ctx context.Context, tokenHash string) error
+	DeleteAllByUserID(ctx context.Context, userID int64) error
 }
 
 type AccessClaims struct {

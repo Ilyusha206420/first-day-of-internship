@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
@@ -13,13 +12,6 @@ type Token struct {
 	UserID    int64
 	TokenHash string
 	ExpiresAt time.Time
-}
-
-type TokenRepository interface {
-	Add(ctx context.Context, token *Token) error
-	FindByHash(ctx context.Context, tokenHash string) (*Token, error)
-	DeleteByHash(ctx context.Context, tokenHash string) error
-	DeleteAllByUserID(ctx context.Context, userID int64) error
 }
 
 func NewToken(userID int64, ttl time.Duration) (*Token, string, error) {
