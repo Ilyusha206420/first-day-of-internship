@@ -1,2 +1,21 @@
-INSERT INTO methods (method_name) VALUES ('START_POINT'), ('NPC_REPLICA'), ('PLAYER_REPLICA'), ('INTERNAL_MSG'), ('PLOT_DATA');
+INSERT INTO methods (method_name) VALUES 
+('START_POINT'), 
+('NPC_REPLICA'), 
+('PLAYER_REPLICA'), 
+('INTERNAL_MSG'), 
+('PLOT_DATA');
+
+INSERT INTO nodes (method_id)
+SELECT id
+FROM methods
+WHERE method_name = 'START_POINT';
+
+INSERT INTO contents (data) VALUES
+('Выпал шизофренический симптокомплекс'),
+('Выпал органический симптокомплекс'),
+('Выпал олигофренический симптокомплекс'),
+('Выпал аффективно-эндогенный симптокомплекс (гипотимический вариант)'),
+('Выпал аффективно-эндогенный симптокомплекс (гипертимический вариант)'),
+('Выпал личностно-фномальный симптокомплекс'),
+('Выпал психогенно-невротический симптокомплекс'),
 
