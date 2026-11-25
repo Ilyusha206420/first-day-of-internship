@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net/http"
 	"time"
@@ -10,8 +11,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
+	_ "modernc.org/sqlite"
+
 	"github.com/Ilyusha206420/first-day-of-internship/backend/internal/domain"
 	"github.com/Ilyusha206420/first-day-of-internship/backend/internal/repository/pgsql_repo"
+	"github.com/Ilyusha206420/first-day-of-internship/backend/internal/repository/sqlite_repo"
 	"github.com/Ilyusha206420/first-day-of-internship/backend/internal/services"
 	http_transport "github.com/Ilyusha206420/first-day-of-internship/backend/internal/transport/http"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -19,12 +23,29 @@ import (
 )
 
 type Config struct {
-	PGUser        string `env:"POSTGRES_USER,required"`
-	PGPass        string `env:"POSTGRES_PASSWORD,required"`
 	AdminUsername string `env:"ADMIN_USERNAME,required"`
 	AdminPassword string `env:"ADMIN_PASSWORD,required"`
-	JWTSecret     string `env:"JWT_SECRET,required"`
-	DBG           bool   `env:"DEBUG"`
+
+	DBType string `env:"DB_TYPE,required"`
+
+	DBG bool `env:"DEBUG"`
+
+	JWTSecret string `env:"JWT_SECRET,required"`
+
+	PGUser string `env:"POSTGRES_USER"`
+	PGPass string `env:"POSTGRES_PASSWORD"`
+
+	SQLitePath string `env:"SQLITE_PATH"`
+}
+
+type user_repository interface {
+	services.AuthUserRepository
+	services.SessionUserRepository
+	Add(ctx context.Context, user *domain.User) error
+}
+
+type token_repository interface {
+	services.SessionTokenRepository
 }
 
 func main() {
@@ -38,13 +59,32 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	db, err := sqlx.Connect("pgx", "user="+cfg.PGUser+" password="+cfg.PGPass+" dbname=mydb sslmode=disable")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
+	var db *sqlx.DB
+	var ur user_repository
+	var tr token_repository
 
-	ur := pgsql_repo.NewUserRepository(db)
+	switch cfg.DBType {
+	case "postgres":
+		db, err = sqlx.Connect("pgx", "user="+cfg.PGUser+" password="+cfg.PGPass+" dbname=mydb sslmode=disable")
+		if err != nil {
+			log.Fatal(err)
+		}
+		ur = pgsql_repo.NewUserRepository(db)
+		tr = pgsql_repo.NewTokenRepo(db)
+	case "sqlite":
+		dsn := cfg.SQLitePath + "?_pragma=journal_mode(WAL)&_pragma=foreign_keys(ON)&_pragma=busy_timeout(5000)"
+		println(dsn)
+		db, err = sqlx.Connect("sqlite", dsn)
+		if err != nil {
+			log.Fatal(err)
+		}
+		ur = sqlite_repo.NewUserRepository(db)
+		tr = sqlite_repo.NewTokenRepo(db)
+	default:
+		log.Fatal(errors.New("DB_TYPE must be set in .env file"))
+	}
+
+	defer db.Close()
 
 	admin, err := ur.FindByName(context.Background(), cfg.AdminUsername)
 	if err != nil {
@@ -63,11 +103,7 @@ func main() {
 	}
 
 	as := services.NewAuthService(ur)
-
-	tr := pgsql_repo.NewTokenRepo(db)
-
 	ss := services.NewSessionService(ur, tr, cfg.JWTSecret, 15*time.Minute, 30*24*time.Hour)
-
 	ah := http_transport.NewAuthHandler(as, ss, 15*time.Minute, 30*24*time.Hour, !cfg.DBG)
 
 	r := gin.Default()
