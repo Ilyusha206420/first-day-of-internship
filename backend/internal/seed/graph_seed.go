@@ -25,7 +25,7 @@ type dialogBlock struct {
 	NPCMessages     []string `json:"npc messages,omitempty"`
 }
 
-func SeedFromJson(
+func CompareAndSeed(
 	ctx context.Context, filePath string,
 	nodeRepo GraphSeederNodeRepository,
 	edgeRepo GraphSeederEdgeRepository,
@@ -44,22 +44,10 @@ func SeedFromJson(
 		return err
 	}
 
-	prevIDs := []int64{}
-
 	for _, scenario := range scenarios {
 		for _, block := range scenario {
 			if block.InternalMessage != "" {
-				c, err := contentRepo.FindByData(ctx, block.InternalMessage)
-				if err != nil {
-					return err
-				}
-				println("found id: %d", c.ID)
-				id, err := contentRepo.Add(block.InternalMessage)
-				if err != nil {
-					return err
-				}
 
-				prevIDs = append(prevIDs[:0], id)
 			} else {
 
 			}

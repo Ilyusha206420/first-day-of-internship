@@ -6,7 +6,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func CreateTeble(db *sqlx.DB, scriptPath string) error {
+func CreateTebles(db *sqlx.DB, scriptPath string) error {
 	query, err := os.ReadFile(scriptPath)
 	if err != nil {
 		return err

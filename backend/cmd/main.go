@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -16,7 +16,6 @@ import (
 	"github.com/Ilyusha206420/first-day-of-internship/backend/internal/domain"
 	"github.com/Ilyusha206420/first-day-of-internship/backend/internal/repository/pgsql_repo"
 	"github.com/Ilyusha206420/first-day-of-internship/backend/internal/repository/sqlite_repo"
-	"github.com/Ilyusha206420/first-day-of-internship/backend/internal/seed"
 	"github.com/Ilyusha206420/first-day-of-internship/backend/internal/services"
 	http_transport "github.com/Ilyusha206420/first-day-of-internship/backend/internal/transport/http"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -50,7 +49,7 @@ type token_repository interface {
 }
 
 type content_repository interface {
-	seed.GraphSeederContentRepository
+	// seed.GraphSeederContentRepository
 }
 
 type edge_repository interface {
@@ -62,12 +61,12 @@ type node_repository interface {
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal(fmt.Errorf("error with loading environment: %v", err))
 	}
 
 	var cfg Config
 	if err = env.Parse(&cfg); err != nil {
-		log.Fatal(err.Error())
+		log.Fatal(fmt.Errorf("error with pasing environment %v", err))
 	}
 
 	var db *sqlx.DB
@@ -81,7 +80,7 @@ func main() {
 	case "postgres":
 		db, err = sqlx.Connect("pgx", "user="+cfg.PGUser+" password="+cfg.PGPass+" dbname=mydb sslmode=disable")
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal(fmt.Errorf("Error with connecting postgres database: %v", err))
 		}
 		ur = pgsql_repo.NewUserRepository(db)
 		tr = pgsql_repo.NewTokenRepo(db)
@@ -89,34 +88,41 @@ func main() {
 		dsn := cfg.SQLitePath + "?_pragma=journal_mode(WAL)&_pragma=foreign_keys(ON)&_pragma=busy_timeout(5000)"
 		db, err = sqlx.Connect("sqlite", dsn)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal(fmt.Errorf("error with connecting databse: %v", err))
 		}
+
+		err = sqlite_repo.CreateTebles(db, "./db_scripts/sqlite/create.sql")
+		if err != nil {
+			log.Fatal(fmt.Errorf("error with creating tables: %v", err))
+		}
+
 		ur = sqlite_repo.NewUserRepository(db)
 		tr = sqlite_repo.NewTokenRepo(db)
 		cr = sqlite_repo.NewContentRepo(db)
-		err = seed.SeedFromJson(context.Background(), "./data/graph/dialogs.json", nr, er, cr)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
+
+		// err = seed.SeedFromJson(context.Background(), "./data/graph/dialogs.json", nr, er, cr)
+		// if err != nil {
+		// 	log.Fatal(err.Error())
+		// }
 	default:
-		log.Fatal(errors.New("DB_TYPE must be set in .env file"))
+		log.Fatal(fmt.Errorf("can't get DB_TYPE, variable getted: %v, excepted sqlite or postgres", cfg.DBType))
 	}
 
 	defer db.Close()
 
 	admin, err := ur.FindByName(context.Background(), cfg.AdminUsername)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(fmt.Errorf("error with loading admin user: %v", err))
 	}
 
 	if admin == nil {
 		admin, err = domain.NewUser(cfg.AdminUsername, cfg.AdminPassword)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal(fmt.Errorf("error with creating admin user: %v", err))
 		}
 		err = ur.Add(context.Background(), admin)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal(fmt.Errorf("error with saving admin user: %v", err))
 		}
 	}
 
