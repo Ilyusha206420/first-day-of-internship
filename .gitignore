@@ -3,4 +3,4 @@
 /frontend/.pnp.js
 .VSCodeCounter/
 .env
-backend/data/
+backend/data/database/
