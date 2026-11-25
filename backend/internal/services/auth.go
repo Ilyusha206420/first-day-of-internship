@@ -11,11 +11,15 @@ var (
 	InvalidCredentials = errors.New("Invalid username or password")
 )
 
-type AuthService struct {
-	userRepo domain.UserRepository
+type AuthUserRepository interface {
+	FindByName(ctx context.Context, username string) (*domain.User, error)
 }
 
-func NewAuthService(userRepo domain.UserRepository) *AuthService {
+type AuthService struct {
+	userRepo AuthUserRepository
+}
+
+func NewAuthService(userRepo AuthUserRepository) *AuthService {
 	return &AuthService{userRepo: userRepo}
 }
 
