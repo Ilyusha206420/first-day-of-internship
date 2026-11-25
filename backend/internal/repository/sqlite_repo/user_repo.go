@@ -43,7 +43,7 @@ func (ur *UserRepository) Add(ctx context.Context, u *domain.User) error {
 	query := `
 		INSERT INTO users (public_id, name, pass) 
 		VALUES (?, ?, ?) 
-		RETURNING id, public_id`
+		RETURNING id`
 
 	pubID := uuid.New()
 
