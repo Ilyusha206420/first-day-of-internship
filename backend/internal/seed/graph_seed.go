@@ -15,7 +15,8 @@ type GraphSeederEdgeRepository interface {
 }
 
 type GraphSeederContentRepository interface {
-	FindByData(data string) (*domain.Content, error)
+	FindByData(ctx context.Context, data string) (*domain.Content, error)
+	Add(data string) (int64, error)
 }
 
 type dialogBlock struct {
@@ -24,7 +25,7 @@ type dialogBlock struct {
 	NPCMessages     []string `json:"npc messages,omitempty"`
 }
 
-func SeedCompareWithJson(
+func SeedFromJson(
 	ctx context.Context, filePath string,
 	nodeRepo GraphSeederNodeRepository,
 	edgeRepo GraphSeederEdgeRepository,
@@ -43,13 +44,22 @@ func SeedCompareWithJson(
 		return err
 	}
 
+	prevIDs := []int64{}
+
 	for _, scenario := range scenarios {
 		for _, block := range scenario {
 			if block.InternalMessage != "" {
-				c, err := contentRepo.FindByData(block.InternalMessage)
+				c, err := contentRepo.FindByData(ctx, block.InternalMessage)
 				if err != nil {
 					return err
 				}
+				println("found id: %d", c.ID)
+				id, err := contentRepo.Add(block.InternalMessage)
+				if err != nil {
+					return err
+				}
+
+				prevIDs = append(prevIDs[:0], id)
 			} else {
 
 			}
