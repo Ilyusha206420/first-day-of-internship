@@ -1,0 +1,35 @@
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    public_id TEXT,
+    name TEXT,
+    pass TEXT
+);
+
+CREATE TABLE tokens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    refresh_token TEXT NOT NULL UNIQUE,
+    expires_at INTEGER NOT NULL,
+    user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE
+);
+
+CREATE TABLE contents (
+    id INTEGER PRIMARY KEY AUTOINCREMENT ,
+    data TEXT UNIQUE NOT NULL
+);
+
+CREATE TABLE methods (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    method_name TEXT UNIQUE NOT NULL
+);
+
+CREATE TABLE nodes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    method_id INTEGER REFERENCES methods (id) ON UPDATE CASCADE,
+    content_id INTEGER REFERENCES contents (id)
+);
+
+CREATE TABLE edges (
+    src_id INTEGER NOT NULL REFERENCES nodes (id),
+    tgt_id INTEGER NOT NULL REFERENCES nodes (id),
+    PRIMARY KEY (src_id, tgt_id)
+);
