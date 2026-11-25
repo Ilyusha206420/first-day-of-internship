@@ -4,28 +4,21 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"time"
 
 	"github.com/Ilyusha206420/first-day-of-internship/backend/internal/domain"
+	"github.com/Ilyusha206420/first-day-of-internship/backend/internal/repository/rows"
 	"github.com/jmoiron/sqlx"
 )
 
-type PGTokenRepo struct {
+type TokenRepo struct {
 	db *sqlx.DB
 }
 
-type tokenRow struct {
-	ID        int64     `db:"id"`
-	UserID    int64     `db:"user_id"`
-	TokenHash string    `db:"refresh_token"`
-	ExpiresAt time.Time `db:"expires_at"`
+func NewTokenRepo(db *sqlx.DB) *TokenRepo {
+	return &TokenRepo{db: db}
 }
 
-func NewTokenRepo(db *sqlx.DB) *PGTokenRepo {
-	return &PGTokenRepo{db: db}
-}
-
-func (tr *PGTokenRepo) Add(ctx context.Context, token *domain.Token) error {
+func (tr *TokenRepo) Add(ctx context.Context, token *domain.Token) error {
 	query := `
 		INSERT INTO tokens (user_id, refresh_token, expires_at)
 		VALUES ($1, $2, $3)`
@@ -33,8 +26,8 @@ func (tr *PGTokenRepo) Add(ctx context.Context, token *domain.Token) error {
 	return err
 }
 
-func (tr *PGTokenRepo) FindByHash(ctx context.Context, tokenHash string) (*domain.Token, error) {
-	var trow tokenRow
+func (tr *TokenRepo) FindByHash(ctx context.Context, tokenHash string) (*domain.Token, error) {
+	var trow rows.TokenRow
 	query := `SELECT id, user_id, refresh_token, expires_at FROM tokens WHERE refresh_token = $1`
 
 	err := tr.db.GetContext(ctx, &trow, query, tokenHash)
@@ -52,13 +45,13 @@ func (tr *PGTokenRepo) FindByHash(ctx context.Context, tokenHash string) (*domai
 	}, nil
 }
 
-func (tr *PGTokenRepo) DeleteByHash(ctx context.Context, tokenHash string) error {
+func (tr *TokenRepo) DeleteByHash(ctx context.Context, tokenHash string) error {
 	query := `DELETE FROM tokens WHERE refresh_token = $1`
 	_, err := tr.db.ExecContext(ctx, query, tokenHash)
 	return err
 }
 
-func (tr *PGTokenRepo) DeleteAllByUserID(ctx context.Context, userID int64) error {
+func (tr *TokenRepo) DeleteAllByUserID(ctx context.Context, userID int64) error {
 	query := `DELETE FROM TOKENS WHERE user_id = $1`
 	_, err := tr.db.ExecContext(ctx, query, userID)
 	return err

@@ -7,25 +7,19 @@ import (
 	"uuid"
 
 	"github.com/Ilyusha206420/first-day-of-internship/backend/internal/domain"
+	"github.com/Ilyusha206420/first-day-of-internship/backend/internal/repository/rows"
 	"github.com/jmoiron/sqlx"
 )
 
-type PGUserRepository struct {
+type UserRepository struct {
 	db *sqlx.DB
 }
 
-type userRow struct {
-	ID       int64     `db:"id"`
-	PublicID uuid.UUID `db:"public_id"`
-	Name     string    `db:"name"`
-	Password string    `db:"pass"`
+func NewUserRepository(db *sqlx.DB) *UserRepository {
+	return &UserRepository{db: db}
 }
 
-func NewUserRepository(db *sqlx.DB) *PGUserRepository {
-	return &PGUserRepository{db: db}
-}
-
-func (ur *PGUserRepository) Add(ctx context.Context, user *domain.User) error {
+func (ur *UserRepository) Add(ctx context.Context, user *domain.User) error {
 	query := `
 		INSERT INTO users (name, pass) 
 		VALUES ($1, $2) 
@@ -34,8 +28,8 @@ func (ur *PGUserRepository) Add(ctx context.Context, user *domain.User) error {
 	return ur.db.QueryRowxContext(ctx, query, user.Name, user.PasswordHash).Scan(&user.ID, &user.PublicID)
 }
 
-func (ur *PGUserRepository) FindByID(ctx context.Context, user_id int64) (*domain.User, error) {
-	var urow userRow
+func (ur *UserRepository) FindByID(ctx context.Context, user_id int64) (*domain.User, error) {
+	var urow rows.UserRow
 	query := `SELECT id, public_id, name, pass FROM users WHERE id = $1`
 
 	err := ur.db.GetContext(ctx, &urow, query, user_id)
@@ -54,8 +48,8 @@ func (ur *PGUserRepository) FindByID(ctx context.Context, user_id int64) (*domai
 	}, nil
 }
 
-func (ur *PGUserRepository) FindByName(ctx context.Context, name string) (*domain.User, error) {
-	var urow userRow
+func (ur *UserRepository) FindByName(ctx context.Context, name string) (*domain.User, error) {
+	var urow rows.UserRow
 	query := `SELECT id, public_id, name, pass FROM users WHERE name = $1`
 
 	err := ur.db.GetContext(ctx, &urow, query, name)
@@ -74,8 +68,8 @@ func (ur *PGUserRepository) FindByName(ctx context.Context, name string) (*domai
 	}, nil
 }
 
-func (ur *PGUserRepository) FindByPublicID(ctx context.Context, publicID uuid.UUID) (*domain.User, error) {
-	var urow userRow
+func (ur *UserRepository) FindByPublicID(ctx context.Context, publicID uuid.UUID) (*domain.User, error) {
+	var urow rows.UserRow
 	query := `SELECT id, public_id, name, pass FROM users WHERE public_id = $1`
 
 	err := ur.db.GetContext(ctx, &urow, query, publicID)
@@ -94,7 +88,7 @@ func (ur *PGUserRepository) FindByPublicID(ctx context.Context, publicID uuid.UU
 	}, nil
 }
 
-func (ur *PGUserRepository) ChangePassword(ctx context.Context, user_id int64, newPasswordHash string) error {
+func (ur *UserRepository) ChangePassword(ctx context.Context, user_id int64, newPasswordHash string) error {
 	query := `UPDATE users SET pass = $1 WHERE id = $2`
 	_, err := ur.db.ExecContext(ctx, query, newPasswordHash, user_id)
 	return err
