@@ -16,6 +16,7 @@ import (
 	"github.com/Ilyusha206420/first-day-of-internship/backend/internal/domain"
 	"github.com/Ilyusha206420/first-day-of-internship/backend/internal/repository/pgsql_repo"
 	"github.com/Ilyusha206420/first-day-of-internship/backend/internal/repository/sqlite_repo"
+	"github.com/Ilyusha206420/first-day-of-internship/backend/internal/seed"
 	"github.com/Ilyusha206420/first-day-of-internship/backend/internal/services"
 	http_transport "github.com/Ilyusha206420/first-day-of-internship/backend/internal/transport/http"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -48,6 +49,16 @@ type token_repository interface {
 	services.SessionTokenRepository
 }
 
+type content_repository interface {
+	seed.GraphSeederContentRepository
+}
+
+type edge_repository interface {
+}
+
+type node_repository interface {
+}
+
 func main() {
 	err := godotenv.Load()
 	if err != nil {
@@ -62,6 +73,9 @@ func main() {
 	var db *sqlx.DB
 	var ur user_repository
 	var tr token_repository
+	var cr content_repository
+	var er edge_repository
+	var nr node_repository
 
 	switch cfg.DBType {
 	case "postgres":
@@ -73,13 +87,17 @@ func main() {
 		tr = pgsql_repo.NewTokenRepo(db)
 	case "sqlite":
 		dsn := cfg.SQLitePath + "?_pragma=journal_mode(WAL)&_pragma=foreign_keys(ON)&_pragma=busy_timeout(5000)"
-		println(dsn)
 		db, err = sqlx.Connect("sqlite", dsn)
 		if err != nil {
 			log.Fatal(err)
 		}
 		ur = sqlite_repo.NewUserRepository(db)
 		tr = sqlite_repo.NewTokenRepo(db)
+		cr = sqlite_repo.NewContentRepo(db)
+		err = seed.SeedFromJson(context.Background(), "./data/graph/dialogs.json", nr, er, cr)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
 	default:
 		log.Fatal(errors.New("DB_TYPE must be set in .env file"))
 	}
