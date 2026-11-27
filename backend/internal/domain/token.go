@@ -9,12 +9,12 @@ import (
 
 type Token struct {
 	ID        int64
-	UserID    int64
+	User      *User
 	TokenHash string
 	ExpiresAt time.Time
 }
 
-func NewToken(userID int64, ttl time.Duration) (*Token, string, error) {
+func NewToken(user *User, ttl time.Duration) (*Token, string, error) {
 	rawBytes := make([]byte, 32)
 	if _, err := rand.Read(rawBytes); err != nil {
 		return nil, "", err
@@ -24,7 +24,7 @@ func NewToken(userID int64, ttl time.Duration) (*Token, string, error) {
 	hash := HashToken(rawToken)
 
 	return &Token{
-		UserID:    userID,
+		User:      user,
 		TokenHash: hash,
 		ExpiresAt: time.Now().UTC().Add(ttl),
 	}, rawToken, nil
