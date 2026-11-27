@@ -10,19 +10,24 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type TokenRepo struct {
-	db *sqlx.DB
+type userLookup interface {
+	FindByID(ctx context.Context, userID int64) (*domain.User, error)
 }
 
-func NewTokenRepo(db *sqlx.DB) *TokenRepo {
-	return &TokenRepo{db: db}
+type TokenRepo struct {
+	db       *sqlx.DB
+	userRepo userLookup
+}
+
+func NewTokenRepo(db *sqlx.DB, userRepo userLookup) *TokenRepo {
+	return &TokenRepo{db: db, userRepo: userRepo}
 }
 
 func (tr *TokenRepo) Add(ctx context.Context, token *domain.Token) error {
 	query := `
 		INSERT INTO tokens (user_id, refresh_token, expires_at)
 		VALUES (?, ?, ?)`
-	_, err := tr.db.ExecContext(ctx, query, token.UserID, token.TokenHash, token.ExpiresAt)
+	_, err := tr.db.ExecContext(ctx, query, token.User.ID, token.TokenHash, token.ExpiresAt)
 	return err
 }
 
@@ -49,9 +54,15 @@ func (tr *TokenRepo) FindByHash(ctx context.Context, hash string) (*domain.Token
 		}
 		return nil, err
 	}
+
+	user, err := tr.userRepo.FindByID(ctx, trow.UserID)
+	if err != nil {
+		return nil, err
+	}
+
 	return &domain.Token{
 		ID:        trow.ID,
-		UserID:    trow.UserID,
+		User:      user,
 		TokenHash: trow.TokenHash,
 		ExpiresAt: trow.ExpiresAt,
 	}, nil
