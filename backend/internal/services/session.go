@@ -65,7 +65,7 @@ func (ss *SessionService) CreateSession(ctx context.Context, u *domain.User) (*T
 		return nil, fmt.Errorf("generate access token: %w", err)
 	}
 
-	refreshSession, rawRefreshToken, err := domain.NewToken(u.ID, ss.refreshTTL)
+	refreshSession, rawRefreshToken, err := domain.NewToken(u, ss.refreshTTL)
 	if err != nil {
 		return nil, fmt.Errorf("generate refresh token: %w", err)
 	}
@@ -90,7 +90,7 @@ func (ss *SessionService) RefreshAccessToken(ctx context.Context, rawRefreshToke
 	if err != nil {
 		return "", fmt.Errorf("find refresh session: %w", err)
 	}
-	if session == nil {
+	if session == nil || session.User == nil {
 		return "", InvalidToken
 	}
 
@@ -99,15 +99,7 @@ func (ss *SessionService) RefreshAccessToken(ctx context.Context, rawRefreshToke
 		return "", InvalidToken
 	}
 
-	u, err := ss.userRepo.FindByID(ctx, session.UserID)
-	if err != nil {
-		return "", fmt.Errorf("find user by id: %w", err)
-	}
-	if u == nil {
-		return "", InvalidToken
-	}
-
-	accessToken, err := ss.generateAccessToken(u)
+	accessToken, err := ss.generateAccessToken(session.User)
 	if err != nil {
 		return "", fmt.Errorf("generate access token: %w", err)
 	}
