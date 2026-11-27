@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"context"
 	"errors"
 	"uuid"
 
@@ -17,12 +16,6 @@ type User struct {
 	PublicID     uuid.UUID
 	Name         string
 	PasswordHash string
-}
-
-type UserRepository interface {
-	Add(ctx context.Context, user *User) error
-	FindByPublicID(ctx context.Context, publicID uuid.UUID) (*User, error)
-	ChangePassword(ctx context.Context, userID int64, newPasswordHash string) error
 }
 
 func NewUser(name, password string) (*User, error) {
