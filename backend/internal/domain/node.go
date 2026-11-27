@@ -3,14 +3,14 @@ package domain
 type Node struct {
 	ID     int64
 	Method string
-	Data   string
+	Cont   *Content
 	Next   []*Node
 }
 
-func NewNode(id int64, method string, data string) *Node {
+func NewNode(id int64, method string, cont *Content) *Node {
 	return &Node{
 		ID:     id,
 		Method: method,
-		Data:   data,
+		Cont:   cont,
 	}
 }
