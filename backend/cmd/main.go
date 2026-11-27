@@ -16,6 +16,7 @@ import (
 	"github.com/Ilyusha206420/first-day-of-internship/backend/internal/domain"
 	"github.com/Ilyusha206420/first-day-of-internship/backend/internal/repository/pgsql_repo"
 	"github.com/Ilyusha206420/first-day-of-internship/backend/internal/repository/sqlite_repo"
+	"github.com/Ilyusha206420/first-day-of-internship/backend/internal/seed"
 	"github.com/Ilyusha206420/first-day-of-internship/backend/internal/services"
 	http_transport "github.com/Ilyusha206420/first-day-of-internship/backend/internal/transport/http"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -48,16 +49,6 @@ type token_repository interface {
 	services.SessionTokenRepository
 }
 
-type content_repository interface {
-	// seed.GraphSeederContentRepository
-}
-
-type edge_repository interface {
-}
-
-type node_repository interface {
-}
-
 func main() {
 	err := godotenv.Load()
 	if err != nil {
@@ -72,9 +63,7 @@ func main() {
 	var db *sqlx.DB
 	var ur user_repository
 	var tr token_repository
-	var cr content_repository
-	var er edge_repository
-	var nr node_repository
+	var gr seed.GraphSeederRepository
 
 	switch cfg.DBType {
 	case "postgres":
@@ -82,8 +71,10 @@ func main() {
 		if err != nil {
 			log.Fatal(fmt.Errorf("Error with connecting postgres database: %v", err))
 		}
+
 		ur = pgsql_repo.NewUserRepository(db)
-		tr = pgsql_repo.NewTokenRepo(db)
+		tr = pgsql_repo.NewTokenRepo(db, ur)
+		gr = pgsql_repo.NewGraphRepo(db)
 	case "sqlite":
 		dsn := cfg.SQLitePath + "?_pragma=journal_mode(WAL)&_pragma=foreign_keys(ON)&_pragma=busy_timeout(5000)"
 		db, err = sqlx.Connect("sqlite", dsn)
@@ -97,18 +88,21 @@ func main() {
 		}
 
 		ur = sqlite_repo.NewUserRepository(db)
-		tr = sqlite_repo.NewTokenRepo(db)
-		cr = sqlite_repo.NewContentRepo(db)
-
-		// err = seed.SeedFromJson(context.Background(), "./data/graph/dialogs.json", nr, er, cr)
-		// if err != nil {
-		// 	log.Fatal(err.Error())
-		// }
+		tr = sqlite_repo.NewTokenRepo(db, ur)
+		gr = sqlite_repo.NewGraphRepo(db)
 	default:
 		log.Fatal(fmt.Errorf("can't get DB_TYPE, variable getted: %v, excepted sqlite or postgres", cfg.DBType))
 	}
 
 	defer db.Close()
+
+	if err := seed.CompareAndSeed(
+		context.Background(),
+		"./data/graph/dialogs.json",
+		gr,
+	); err != nil {
+		log.Fatal(fmt.Errorf("error with synchronizing dialog graph: %w", err))
+	}
 
 	admin, err := ur.FindByName(context.Background(), cfg.AdminUsername)
 	if err != nil {
