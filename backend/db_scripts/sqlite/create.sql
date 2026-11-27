@@ -33,3 +33,14 @@ CREATE TABLE IF NOT EXISTS edges (
     tgt_id INTEGER NOT NULL REFERENCES nodes (id),
     PRIMARY KEY (src_id, tgt_id)
 );
+
+CREATE TABLE IF NOT EXISTS dialogs (
+    dialog_id INTEGER NOT NULL,
+    dialog_step INTEGER NOT NULL,
+    started_at INTEGER NOT NULL,
+    ended_at INTEGER,
+    user_id INTEGER NOT NULL REFERENCES users (id),
+    content_id INTEGER NOT NULL REFERENCES contents (id),
+
+    PRIMARY KEY (dialog_id, dialog_step)
+);
